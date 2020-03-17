@@ -5,21 +5,28 @@
 
 package application
 
-import "github.com/gorilla/mux"
+import (
+	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
+)
 
 type Router struct {
-	MuxRoute *mux.Router
-	Handler  *Handler
+	MuxRoute   *mux.Router
+	Handler    *Handler
+	Middleware *Middleware
 }
 
-func NewRouter() *Router{
+// 构造函数
+func NewRouter() *Router {
 	return &Router{
 		MuxRoute: mux.NewRouter(),
 	}
 }
 
+// 绑定路由
 func (r *Router) Bind() {
-	r.MuxRoute.HandleFunc("/api/v1/shorten", r.Handler.CreateShortLink).Methods("POST")
-	r.MuxRoute.HandleFunc("/api/v1/info", r.Handler.GetShortLink).Methods("GET")
-	r.MuxRoute.HandleFunc("/{short_link:[a-zA-Z0-9]{1,11}}", r.Handler.Redirect).Methods("GET")
+	m := alice.New(r.Middleware.LogHandler, r.Middleware.RecoverHandler)
+	r.MuxRoute.Handle("/api/v1/shorten", m.ThenFunc(r.Handler.CreateShortLink)).Methods("POST")
+	r.MuxRoute.Handle("/api/v1/info", m.ThenFunc(r.Handler.GetShortLink)).Methods("GET")
+	r.MuxRoute.Handle("/{url:[a-zA-Z0-9]{1,11}}", m.ThenFunc(r.Handler.Redirect)).Methods("GET")
 }
