@@ -41,6 +41,5 @@ func RespondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 // 启动服务
 func (a *App) Run(addr string) {
 	router := NewRouter()
-	router.Bind()
 	log.Fatal(http.ListenAndServe(addr, router.MuxRoute))
 }

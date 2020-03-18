@@ -18,9 +18,11 @@ type Router struct {
 
 // 构造函数
 func NewRouter() *Router {
-	return &Router{
+	router := &Router{
 		MuxRoute: mux.NewRouter(),
 	}
+	router.Bind()
+	return router
 }
 
 // 绑定路由
@@ -28,5 +30,5 @@ func (r *Router) Bind() {
 	m := alice.New(r.Middleware.LogHandler, r.Middleware.RecoverHandler)
 	r.MuxRoute.Handle("/api/v1/shorten", m.ThenFunc(r.Handler.CreateShortLink)).Methods("POST")
 	r.MuxRoute.Handle("/api/v1/info", m.ThenFunc(r.Handler.GetShortLink)).Methods("GET")
-	r.MuxRoute.Handle("/{url:[a-zA-Z0-9]{1,6}}", m.ThenFunc(r.Handler.Redirect)).Methods("GET")
+	r.MuxRoute.Handle("/{url:[a-zA-Z0-9]{6}}", m.ThenFunc(r.Handler.Redirect)).Methods("GET")
 }
