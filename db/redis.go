@@ -6,19 +6,14 @@
 package db
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
+	"TgoShorten/util"
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis"
-	"github.com/gravityblast/go-base62"
-	"log"
 	"time"
 )
 
 const (
-	UrlIdKey           = "next.url.id"
-	ShortLinkKey       = "short_link:%s:url"
 	UrlHashKey         = "url_hash:%s:url"
 	ShortLinkDetailKey = "short_link:%s:detail"
 )
@@ -49,39 +44,25 @@ func NewRedisCli() *RedisCli {
 	}
 }
 
+// 生成短地址
 func (r *RedisCli) Shorten(url string, exp int64) (string, error) {
-	hashVal := toSha1(url)
-	res, err := r.Cli.Get(fmt.Sprintf(UrlHashKey, hashVal)).Result()
+	hashArr, err := util.UrlEncrypt(url)
+	if err != nil {
+		return "", err
+	}
+	hashUrl := hashArr[0]
+	res, err := r.Cli.Get(fmt.Sprintf(UrlHashKey, hashUrl)).Result()
 	if err == redis.Nil {
 
 	} else if err != nil {
 		return "", err
 	} else {
-		if res == "{}" {
-		} else {
+		if res != "{}" {
 			return res, nil
 		}
 	}
 
-	err = r.Cli.Incr(UrlIdKey).Err()
-	if err != nil {
-		return "", err
-	}
-
-	id, err := r.Cli.Get(UrlIdKey).Int()
-	if err != nil {
-		return "", err
-	}
-
-	eid := base62.Encode(id)
-	log.Println(eid)
-
-	err = r.Cli.Set(fmt.Sprintf(ShortLinkKey, eid), url, time.Minute*time.Duration(exp)).Err()
-	if err != nil {
-		return "", err
-	}
-
-	err = r.Cli.Set(fmt.Sprintf(UrlHashKey, hashVal), eid, time.Minute*time.Duration(exp)).Err()
+	err = r.Cli.Set(fmt.Sprintf(UrlHashKey, hashUrl), url, time.Minute*time.Duration(exp)).Err()
 	if err != nil {
 		return "", err
 	}
@@ -89,23 +70,42 @@ func (r *RedisCli) Shorten(url string, exp int64) (string, error) {
 	detail, err := json.Marshal(
 		&UrlDetail{
 			Url:        url,
-			CreatedAt:  time.Now().String(),
+			CreatedAt:  time.Now().Format("2006-01-02 15:04:05"),
 			Expiration: time.Duration(exp),
 		})
 	if err != nil {
 		return "", err
 	}
 
-	err = r.Cli.Set(fmt.Sprintf(ShortLinkDetailKey, eid), detail, time.Minute*time.Duration(exp)).Err()
+	err = r.Cli.Set(fmt.Sprintf(ShortLinkDetailKey, hashUrl), detail, time.Minute*time.Duration(exp)).Err()
 	if err != nil {
 		return "", err
 	}
 
-	return eid, nil
+	return hashUrl, nil
 }
 
-func (r *RedisCli) ShortLinkInfo(eid string) (interface{}, error) {
-	res, err := r.Cli.Get(fmt.Sprintf(ShortLinkDetailKey, eid)).Result()
+// 短地址详情
+func (r *RedisCli) ShortLinkInfo(hashUrl string) (interface{}, error) {
+	res, err := r.Cli.Get(fmt.Sprintf(ShortLinkDetailKey, hashUrl)).Result()
+	if err == redis.Nil {
+		return nil, err
+	} else if err != nil {
+		return nil, err
+	} else {
+		var urlDetail UrlDetail
+		err := json.Unmarshal([]byte(res), &urlDetail)
+		if err != nil {
+			return nil, err
+		} else {
+			return urlDetail, nil
+		}
+	}
+}
+
+// 获取原地址
+func (r *RedisCli) UnShorten(hashUrl string) (string, error) {
+	res, err := r.Cli.Get(fmt.Sprintf(UrlHashKey, hashUrl)).Result()
 	if err == redis.Nil {
 		return "", err
 	} else if err != nil {
@@ -113,21 +113,4 @@ func (r *RedisCli) ShortLinkInfo(eid string) (interface{}, error) {
 	} else {
 		return res, nil
 	}
-}
-
-func (r *RedisCli) UnShorten(eid string) (string, error) {
-	res, err := r.Cli.Get(fmt.Sprintf(ShortLinkKey, eid)).Result()
-	if err == redis.Nil {
-		return "", err
-	} else if err != nil {
-		return "", err
-	} else {
-		return res, nil
-	}
-}
-
-func toSha1(data string) string {
-	s := sha1.New()
-	s.Write([]byte(data))
-	return hex.EncodeToString(s.Sum([]byte("")))
 }

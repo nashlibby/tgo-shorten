@@ -48,9 +48,16 @@ func (h *Handler) CreateShortLink(w http.ResponseWriter, r *http.Request) {
 	cli := db.NewRedisCli()
 	res, err := cli.Shorten(req.Url, req.Expiration)
 	if err != nil {
-		RespondWithError(w, err)
+		RespondWithJson(w, http.StatusOK, map[string]interface{}{
+			"code": -1,
+			"msg": "短链接生成失败",
+		})
 	} else {
-		RespondWithJson(w, http.StatusCreated, ShortenResp{ShortLink:res})
+		RespondWithJson(w, http.StatusOK, map[string]interface{}{
+			"code": 0,
+			"msg": "短链接生成成功",
+			"data": res,
+		})
 	}
 }
 
@@ -61,9 +68,16 @@ func (h *Handler) GetShortLink(w http.ResponseWriter, r *http.Request) {
 	cli := db.NewRedisCli()
 	res, err := cli.ShortLinkInfo(url)
 	if err != nil {
-		RespondWithError(w, err)
+		RespondWithJson(w, http.StatusOK, map[string]interface{}{
+			"code": -1,
+			"msg": "短链接不存在",
+		})
 	} else {
-		RespondWithJson(w, http.StatusOK, res)
+		RespondWithJson(w, http.StatusOK, map[string]interface{}{
+			"code": 0,
+			"msg": "获取成功",
+			"data": res,
+		})
 	}
 }
 
