@@ -7,7 +7,6 @@ package util
 
 import (
 	"crypto/md5"
-	"crypto/sha1"
 	"encoding/hex"
 	"strconv"
 )
@@ -44,13 +43,6 @@ func UrlEncrypt(url string) ([4]string, error) {
 		result[i] = string(tempUri)
 	}
 	return result, nil
-}
-
-// sha1加密
-func StrToSha1(data string) string {
-	s := sha1.New()
-	s.Write([]byte(data))
-	return hex.EncodeToString(s.Sum([]byte("")))
 }
 
 // md5加密
