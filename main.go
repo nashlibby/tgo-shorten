@@ -6,9 +6,9 @@
 package main
 
 import (
-	app "TgoShorten/application"
 	"flag"
 	"log"
+	app "tgo-shorten/application"
 )
 
 func main() {

@@ -6,12 +6,12 @@
 package application
 
 import (
-	"TgoShorten/db"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"gopkg.in/validator.v2"
 	"net/http"
+	"tgo-shorten/db"
 )
 
 type Handler struct {

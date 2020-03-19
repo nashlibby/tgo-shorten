@@ -6,10 +6,10 @@
 package db
 
 import (
-	"TgoShorten/util"
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis"
+	"tgo-shorten/util"
 	"time"
 )
 
