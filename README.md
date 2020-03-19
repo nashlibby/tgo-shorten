@@ -6,7 +6,7 @@ golang实现的短地址服务
 ```bash
 git clone git@github.com:nashlibby/TgoShorten.git
 go build
-./TgoShorten --port=8088
+./tgo-shorten --port=8088
 ```
 #### 接口
 
