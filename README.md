@@ -1,5 +1,5 @@
 ## TgoShorten
-golang实现的短地址服务
+基于mux和redis实现的短地址服务
 
 #### 安装 & 运行
 
