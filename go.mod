@@ -1,4 +1,4 @@
-module TgoShorten
+module tgo-shorten
 
 go 1.14
 
